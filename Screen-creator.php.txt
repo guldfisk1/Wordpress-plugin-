@@ -1,0 +1,403 @@
+	<?php
+	/*
+	Plugin Name: Screen Sets
+	Description: Screen sets plugin to handle screen configurations
+	Version: 1.0
+	*/
+
+	// Tarkista, että tiedostoa ei voida käyttää suoraan
+	if (!defined('ABSPATH')) {
+		exit; // Poistu, jos tiedostoa yritetään käyttää suoraan
+	}
+
+	// Rekisteröi lohko ja määritä renderöintifunktio
+	function register_screen_sets_block() {
+    register_block_type('screen-sets/custom-block', array(
+        'render_callback' => 'render_screen_sets_block',
+    ));
+}
+	add_action('init', 'register_screen_sets_block');
+
+	// Lohkon renderöintilogiikka
+	function render_screen_sets_block($attributes) {
+    $screen_sets = get_option('screen_sets', array());
+    $selected_set = $attributes['selectedSet'] ?? '';
+
+    $set = current(array_filter($screen_sets, function ($cs) use ($selected_set) {
+        return $cs['title'] === $selected_set;
+    }));
+
+    if (!$set) {
+        return 'Valittua settiä ei löydy!';
+    }
+
+    ob_start();
+    ?>
+    <div class="wp-block-screen-sets-custom-block">
+        <?php if (!empty($set['header_title'])) : ?>
+            <h2 class="screen-set-title"><?php echo esc_html($set['header_title']); ?></h2>
+        <?php endif; ?>
+        <?php if (!empty($set['display_image'])) : ?>
+            <img src="<?php echo esc_url($set['display_image']); ?>" alt="<?php echo esc_attr($set['model']); ?>" class="screen-set-image">
+        <?php endif; ?>
+        <?php echo !empty($set['model']) ? '<p>Näytönmalli: ' . esc_html($set['model']) . '</p>' : ''; ?>
+        <?php echo !empty($set['size']) ? '<p>Koko: ' . esc_html($set['size']) . '</p>' : ''; ?>
+        <?php echo !empty($set['resolution']) ? '<p>Resoluutio: ' . esc_html($set['resolution']) . '</p>' : ''; ?>
+        <?php echo !empty($set['brightness']) ? '<p>Kirkkaus: ' . esc_html($set['brightness']) . ' cd/m2</p>' : ''; ?>
+        <?php echo !empty($set['contrast_ratio']) ? '<p>Kontrastisuhde: ' . esc_html($set['contrast_ratio']) . ':1</p>' : ''; ?>
+        <?php echo !empty($set['panel_type']) ? '<p>Paneelin tyyppi: ' . esc_html($set['panel_type']) . '</p>' : ''; ?>
+        <?php echo !empty($set['response_time']) ? '<p>Vasteaika: ' . esc_html($set['response_time']) . '</p>' : ''; ?>
+        <?php echo !empty($set['refresh_rate']) ? '<p>Päivitystaajuus: ' . esc_html($set['refresh_rate']) . '</p>' : ''; ?>
+        <?php echo !empty($set['connectivity']) ? '<p>Liitännät: ' . esc_html($set['connectivity']) . '</p>' : ''; ?>
+        <?php echo !empty($set['warranty']) ? '<p>Takuu: ' . esc_html($set['warranty']) . '</p>' : ''; ?>
+        <?php echo !empty($set['price']) ? '<p>Hinta: ' . esc_html($set['price']) . '</p>' : ''; ?>
+    </div>
+    <?php
+    $output = ob_get_clean();
+    return $output;
+}
+
+	// Lisää mukautettuja tyylejä
+	function add_custom_styles_screen_creator() {
+?>  
+<style>
+	
+	.wp-block-screen-sets-custom-block img {
+            width: 70%; /* Säädä tämä sopivaksi, esimerkiksi 100% tai kiinteä pikseliarvo */
+            object-fit: cover; /* Tämä varmistaa, että kuva peittää koko elementin säilyttäen samalla suhteensa */
+            border-radius: 10px; /* Pyöristetyt kulmat, jos haluat */
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+	
+    /* Oletetaan, että haluat kaikkien kuvien olevan keskitettyjä ja niillä on yhtenäiset marginaalit */
+    .wp-block-screen-sets-custom-block img,
+    .wp-block-computer-sets-custom-block img {
+		height: auto;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 10px;
+        display: block; /* tai 'grid', jos se on toivottu asettelu */
+    }
+
+	.wp-block-image img {
+    object-fit: cover; /* tai käytä 'contain' säilyttääksesi koko kuvan */
+    border-radius: 10px; /* Jos haluat pyöristetyt kulmat */
+}
+
+    /* Yhtenäiset tyylit teksteille molemmille plugineille */
+    .screen-set-details,
+    .computer-set-details {
+        max-width: 50%;
+        padding-left: 10em;
+        text-align: left;
+    }
+
+    .wp-block-screen-sets-custom-block .screen-set-title,
+    .wp-block-computer-sets-custom-block .computer-set-title,
+    .wp-block-screen-sets-custom-block .screen-set-subtitle,
+    .wp-block-computer-sets-custom-block .computer-set-subtitle {
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Oletetaan, että haluat yhtenäiset tyylit specseille */
+    .screen-specs,
+    .computer-specs {
+        text-align: left;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 20px 0;
+        padding-left: 100px;
+    }
+
+    /* Oletetaan, että h2, h3 ja p elementeillä on samat tyylit molemmissa */
+    .screen-specs h2,
+    .computer-specs h2,
+    .screen-specs h3,
+    .computer-specs h3,
+    .screen-specs p,
+    .computer-specs p {
+        margin: 0;
+        padding: 0;
+        font-size: 1em;!important
+        line-height: 1.6;
+    }
+
+    .screen-specs h2,
+    .computer-specs h2 {
+        font-size: 1.5em;!important
+        color: #4A90E2;
+        margin-bottom: 10px;
+    }
+
+    .screen-specs h3,
+    .computer-specs h3 {
+        font-size: 1.2em;
+        color: #7ED321;
+        margin-bottom: 5px;
+    }
+
+    .wp-block-screen-sets-custom-block p {
+    color: #ffffff; /* Valkoinen teksti */
+    line-height: 1.5; /* Lisätään riviväliä */
+    letter-spacing: 0.5px; /* Lisätään kirjainten väliä */
+    padding: 4px; /* Pieni padding ympärillä */
+	padding-left: 30px;
+	padding-right: 30px;
+	border-radius: 4px; /* Pyöristetyt kulmat taustalla */
+}
+</style>
+<?php
+}
+add_action('wp_head', 'add_custom_styles_screen_creator');
+
+
+
+	class ScreenSet {
+		public function __construct() {
+			// Koukkujen lisäys
+			add_action('admin_init', [$this, 'save_screen_sets_to_database']);
+			add_action('init', [$this, 'custom_post_type']);
+			add_action('add_meta_boxes', [$this, 'add_custom_meta_box']);
+			add_action('save_post', [$this, 'save_custom_meta_box_data']);
+			add_action('admin_footer', [$this, 'add_custom_admin_js']);
+		}
+
+	// Tallenna näyttösetit tietokantaan
+	public function save_screen_sets_to_database() {
+        $posts = get_posts(array(
+            'post_type' => 'screenset',
+            'posts_per_page' => -1,
+        ));
+        $screen_sets = [];
+        foreach ($posts as $post) {
+            $screen_sets[] = array(
+                'title' => $post->post_title,
+                'header_title' => get_post_meta($post->ID, 'header_title', true),
+                'display_image' => get_post_meta($post->ID, 'display_image', true),
+                'model' => get_post_meta($post->ID, 'model', true),
+                'size' => get_post_meta($post->ID, 'size', true),
+                'resolution' => get_post_meta($post->ID, 'resolution', true),
+                'brightness' => get_post_meta($post->ID, 'brightness', true),
+                'contrast_ratio' => get_post_meta($post->ID, 'contrast_ratio', true),
+                'panel_type' => get_post_meta($post->ID, 'panel_type', true),
+                'response_time' => get_post_meta($post->ID, 'response_time', true),
+                'refresh_rate' => get_post_meta($post->ID, 'refresh_rate', true),
+                'connectivity' => get_post_meta($post->ID, 'connectivity', true),
+                'warranty' => get_post_meta($post->ID, 'warranty', true),
+                'price' => get_post_meta($post->ID, 'price', true),
+            );
+        }
+        update_option('screen_sets', $screen_sets);
+    }
+
+
+		// Tallenna mukautetun meta-laatikon tiedot
+		  public function save_custom_meta_box_data($post_id) {
+		// Tarkista ja tallenna jokainen mukautettu kenttä
+		$fields = ['header_title', 'display_image', 'model', 'size', 'resolution', 'panel_type', 'response_time', 'refresh_rate', 'connectivity', 'warranty', 'price', 'contrast_ratio', 'brightness'];
+
+		foreach ($fields as $field) {
+			if (array_key_exists($field, $_POST)) {
+				update_post_meta($post_id, $field, sanitize_text_field($_POST[$field]));
+			}
+		}
+	}
+
+
+
+		// Luo mukautettu julkaisutyyppi
+		public function custom_post_type() {
+		// Luo uusi julkaisutyyppi "screenset"
+		register_post_type('screenset', [
+			'public' => true,
+			'label' => 'Näyttökokoonpanot',
+			'supports' => ['title'], // Lisää tarvittavat ominaisuudet tähän
+			'menu_icon' => 'dashicons-desktop',
+		]);
+	}
+
+
+		// Lisää mukautettu meta-laatikko
+		public function add_custom_meta_box() {
+		add_meta_box(
+			'screen_set_meta_box',
+			'Näytön kokoonpanon tiedot',
+			[$this, 'render_custom_meta_box'],
+			'screenset', // Käytä oikeaa postityyppiä
+			'normal',
+			'default'
+		);
+	}
+
+
+		// Renderöi mukautetun meta-laatikon sisältö
+public function render_custom_meta_box($post) {
+    // Haetaan tallennetut arvot
+    $fields = ['header_title', 'display_image', 'model', 'size', 'resolution', 'panel_type', 'response_time', 'refresh_rate', 'connectivity', 'warranty', 'price', 'brightness', 'contrast_ratio'];
+
+    // Alusta arvot
+    foreach ($fields as $field) {
+        ${$field} = get_post_meta($post->ID, $field, true);
+    }
+
+    // Näytä lomake
+    ?>
+    <label for="header_title">Yläotsikko:</label>
+    <input type="text" id="header_title" name="header_title" value="<?php echo esc_attr($header_title); ?>"><br><br>
+
+    <!-- Lisää kentät tähän samalla tavalla -->
+
+    <label for="display_image">Näyttökuva:</label>
+    <input type="text" id="display_image" name="display_image" value="<?php echo esc_attr($display_image); ?>">
+    <input type="button" value="Lisää kuva" class="button button-primary" id="upload_image_button"><br><br>
+    <div id="display_image_preview_container">
+        <?php if ($display_image) : ?>
+            <img src="<?php echo esc_url($display_image); ?>" id="display_image_preview" style="max-width: 250px; height: auto;">
+        <?php endif; ?>
+    </div>
+
+    <!-- Lisää muut kentät samalla tavalla -->
+
+    <label for="model">Malli:</label>
+    <input type="text" id="model" name="model" value="<?php echo esc_attr($model); ?>"><br><br>
+
+    <label for="size">Koko:</label>
+    <input type="text" id="size" name="size" value="<?php echo esc_attr($size); ?>"><br><br>
+
+    <label for="resolution">Resoluutio:</label>
+    <input type="text" id="resolution" name="resolution" value="<?php echo esc_attr($resolution); ?>"><br><br>
+
+	<label for="brightness">Kirkkaus:</label>
+	<input type="text" id="brightness" name="brightness" value="<?php echo esc_attr($brightness); ?>"><br><br>
+
+    <label for="contrast_ratio">Kontrastisuhde:</label>
+    <input type="text" id="contrast_ratio" name="contrast_ratio" value="<?php echo esc_attr($contrast_ratio); ?>"><br><br>
+
+    <label for="panel_type">Paneelityyppi:</label>
+    <input type="text" id="panel_type" name="panel_type" value="<?php echo esc_attr($panel_type); ?>"><br><br>
+
+    <label for="response_time">Vasteaika:</label>
+    <input type="text" id="response_time" name="response_time" value="<?php echo esc_attr($response_time); ?>"><br><br>
+
+    <label for="refresh_rate">Päivitysnopeus:</label>
+    <input type="text" id="refresh_rate" name="refresh_rate" value="<?php echo esc_attr($refresh_rate); ?>"><br><br>
+
+    <label for="connectivity">Yhteysmahdollisuudet:</label>
+    <input type="text" id="connectivity" name="connectivity" value="<?php echo esc_attr($connectivity); ?>"><br><br>
+
+    <label for="warranty">Takuu:</label>
+    <input type="text" id="warranty" name="warranty" value="<?php echo esc_attr($warranty); ?>"><br><br>
+
+    <label for="price">Hinta:</label>
+    <input type="text" id="price" name="price" value="<?php echo esc_attr($price); ?>"><br><br>
+
+    <script>
+		
+    jQuery(document).ready(function($) {
+        $('#upload_image_button').click(function(e) {
+            e.preventDefault();
+            var mediaUploader;
+            if (mediaUploader) {
+                mediaUploader.open();
+                return;
+            }
+            mediaUploader = wp.media({
+                title: 'Valitse näyttökuva',
+                button: {
+                    text: 'Käytä tätä kuvaa'
+                },
+                multiple: false
+            });
+
+            mediaUploader.on('select', function() {
+                var attachment = mediaUploader.state().get('selection').first().toJSON();
+                $('#display_image').val(attachment.url);
+                $('#display_image_preview').attr('src', attachment.url);
+            });
+
+            mediaUploader.open();
+        });
+    });
+    </script>
+    <?php
+}
+
+
+
+
+		// Lisää mukautettu JavaScript hallintapaneeliin
+		public function add_custom_admin_js() {
+			// Haetaan tietokonepakettien tiedot tietokannasta
+			$screen_sets = get_option('screen_sets', array());
+
+			?>
+			<script type="text/javascript">
+			var screenSets = <?php echo json_encode($screen_sets); ?>;
+			(function(wp) {
+				var registerBlockType = wp.blocks.registerBlockType;
+				var el = wp.element.createElement;
+				var SelectControl = wp.components.SelectControl;
+				
+				registerBlockType('screen-sets/custom-block', {
+					title: 'Custom Screen Set',
+					icon: 'desktop',
+					category: 'common',
+					attributes: {
+						selectedSet: {
+							type: 'string',
+							default: ''
+						}
+					},
+					edit: function(props) {
+						var attributes = props.attributes;
+						var setOptions = screenSets.map(function(set) { // Muuta computerSets -> screenSets
+							return { label: set.title, value: set.title };
+						});
+
+						function onChangeSelectedSet(newValue) {
+							props.setAttributes({ selectedSet: newValue });
+						}
+
+						// Luodaan uusi elementti 'p', joka sisältää halutun tekstin
+						var selectLabel = el('p', {}, 'Valitse näyttöpaketti');
+
+						return [
+							selectLabel,
+							el(SelectControl, {
+								label: 'Valitse näyttöpaketti',
+								value: attributes.selectedSet,
+								options: setOptions,
+								onChange: onChangeSelectedSet
+							})
+						];
+					},
+					save: function() {
+						// Palautetaan null, koska sisältö renderöidään palvelimella
+						return null;
+					}
+				});
+			})(window.wp);
+			</script>
+			<?php
+		}
+
+		// Aktivointitoimenpiteet
+		public function activate() {
+			// Aktivointitoimenpiteet
+			$this->custom_post_type();
+			flush_rewrite_rules(); // Päivitä uudelleenkirjoitussäännöt aktivoinnin yhteydessä
+		}
+
+		// Deaktivointitoimenpiteet
+		public function deactivate() {
+			flush_rewrite_rules(); // Päivitä uudelleenkirjoitussäännöt deaktivoinnin yhteydessä
+		}
+	}
+
+	$screen_sets = new ScreenSet();
+	register_activation_hook(__FILE__, [$screen_sets, 'activate']);
+	register_deactivation_hook(__FILE__, [$screen_sets, 'deactivate']);
+	add_action('init', 'register_screen_sets_block');
+	?>
